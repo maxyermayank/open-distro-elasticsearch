@@ -1,0 +1,120 @@
+version: "3.7"
+
+services:
+  elasticsearch:
+    image: ${elasticsearch.image.repository}:${elasticsearch.image.tag}
+    # configs:
+    #   - source: elastic_config
+    #     target: /usr/share/elasticsearch/config/elasticsearch.yml
+    environment:
+      ES_JAVA_OPTS: ${elasticsearch.memory}
+      cluster.name: ${elasticsearch.clustername}
+      http.host: 0.0.0.0
+      transport.host: localhost
+      network.host: 0.0.0.0
+    ports:
+      - target: ${elasticsearch.http.port}
+        published: ${elasticsearch.http.port}
+        mode: ingress
+      - ${elasticsearch.tcp.port}:${elasticsearch.tcp.port}
+    deploy:
+      replicas: ${elasticsearch.replicas}
+      resources:
+        limits:
+          cpus: ${elasticsearch.limits.cpu}
+          memory: ${elasticsearch.limits.memory}
+      labels:
+        traefik.enable: ${ui.enabled}
+        traefik.protocol: ${elasticsearch.scheme}
+        traefik.port: "${elasticsearch.http.port}"
+        traefik.frontend.entryPoints: http,https
+        traefik.frontend.rule: "Host:${ingress.host};PathPrefixStrip:${ingress.es_path}"
+        traefik.docker.network: ${ingress.network}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        failure_action: rollback
+        delay: 15s
+    volumes:
+      - type: volume
+        source: logs
+        target: /var/log
+      - type: volume
+        source: es_data
+        target: /usr/share/elasticsearch/data
+    networks:
+      - backend
+      - ingress
+    healthcheck:
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+  kibana:
+    image: ${kibana.image.repository}:${kibana.image.tag}
+    environment:
+      ELASTICSEARCH_URL: ${kibana.esurl}
+    # configs:
+    #   - source: kibana_config
+    #     target: /usr/share/kibana/config/kibana.yml
+    ports:
+      - target: ${kibana.http.port}
+        published: ${kibana.http.port}
+        mode: ingress
+    expose:
+      - "5601"
+    deploy:
+      replicas: ${kibana.replicas}
+      resources:
+        limits:
+          cpus: ${kibana.limits.cpu}
+          memory: ${kibana.limits.memory}
+      labels:
+        traefik.enable: ${ui.enabled}
+        traefik.protocol: ${kibana.scheme}
+        traefik.port: "${kibana.http.port}"
+        traefik.frontend.entryPoints: http,https
+        traefik.frontend.rule: "Host:${ingress.host};PathPrefixStrip:${ingress.kibana_path}"
+        traefik.docker.network: ${ingress.network}
+      restart_policy:
+        condition: on-failure
+        delay: 5s
+        max_attempts: 3
+        window: 120s
+      update_config:
+        parallelism: 1
+        failure_action: rollback
+        delay: 15s
+    volumes:
+      - type: volume
+        source: logs
+        target: /var/log
+    networks:
+      - backend
+      - ingress
+    healthcheck:
+      interval: 15s
+      timeout: 10s
+      retries: 3
+      start_period: 60s
+
+volumes:
+  es_data:
+  logs:
+
+networks:
+  backend:
+  ingress:
+    name: ${ingress.network}
+    external: true
+# configs:
+#   elastic_config:
+#     file: ../configs/elasticsearch.yml
+#   kibana_config:
+#     file: ../configs/elasticsearch.yml
+#   logstash_config:
+#     file: ../configs/logstash.yml

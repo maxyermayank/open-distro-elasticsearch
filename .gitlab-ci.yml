@@ -1,0 +1,27 @@
+include:
+  - project: devops/ci-cd/pipelines
+    ref: latest
+    file: global.yml
+  - project: devops/ci-cd/pipelines
+    ref: latest
+    file: docker/build/docker-app.yml
+  - project: devops/ci-cd/pipelines
+    ref: latest
+    file: docker/deploy/docker-app.yml
+  - project: devops/ci-cd/pipelines
+    ref: latest
+    file: docker/deploy/continuous.yml
+  - project: devops/ci-cd/oildex-pipelines
+    ref: latest
+    file: docker/deploy/aws-asg-hosts.yml
+
+# Default variables for docker-app projects. These can be customized here or with
+# project CI/CD variables. https://docs.gitlab.com/ee/ci/variables/#variables
+
+variables:
+  # docker-app.yml
+  OILDEX_DEPLOYMENT_WAIT_DISABLE: 1
+  DAST_DISABLED: 1
+  PERFORMANCE_DISABLED: 1
+  DOCKER_APP_NAMESPACE: $CI_REGISTRY/$CI_PROJECT_NAMESPACE
+  DOCKER_APP_REPO: $CI_PROJECT_NAME
