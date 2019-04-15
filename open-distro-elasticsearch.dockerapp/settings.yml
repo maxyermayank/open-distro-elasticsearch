@@ -3,7 +3,7 @@ elasticsearch:
   memory: "-Xmx256m -Xms256m"
   image:
     repository: amazon/opendistro-for-elasticsearch
-    tag: 0.7.0
+    tag: 0.8.0
   replicas: 1
   http:
     port: 9200
@@ -18,7 +18,7 @@ kibana:
   esurl: https://elasticsearch:9200
   image:
     repository: amazon/opendistro-for-elasticsearch-kibana
-    tag: 0.7.0
+    tag: 0.8.0
   replicas: 1
   http:
     port: 5601
@@ -32,6 +32,6 @@ ui:
 
 ingress:
   host: localhost
-  es_path: /
-  kibana_path: /
+  es_path: /elasticsearch
+  kibana_path: /kibana
   network: traefik
